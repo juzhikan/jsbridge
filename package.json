@@ -1,0 +1,42 @@
+{
+  "name": "nejsbridge",
+  "version": "1.3.12",
+  "description": "文学漫画h5和native通信库",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:babel": "babel src/ --out-dir lib/",
+    "build": "rollup -c rollup.comic.config.js && rollup -c rollup.snail.config.js && rollup -c rollup.read.config.js && rollup -c rollup.config.js",
+    "build:read": "rollup -c rollup.read.config.js && rollup -c rollup.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@g.hz.netease.com:22222/winman-f2e/NEJSBridge.git"
+  },
+  "main": "dist/bridge.js",
+  "module": "dist/bridge.es.js",
+  "jsnext:main": "dist/bridge.es.js",
+  "maintainers": [
+    {
+      "name": "hzjiangyh",
+      "email": "hzjiangyh@corp.netease.com",
+      "web": "https://g.hz.netease.com/hzjiangyh"
+    }
+  ],
+  "author": "hzjiangyh <hzjiangyh@corp.netease.com>",
+  "license": "ISC",
+  "dependencies": {
+    "nw-detect": "^1.10.0",
+    "object-assign": "^4.1.1"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.1",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-env": "^1.6.0",
+    "rollup": "^0.49.3",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-commonjs": "^8.2.1",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "webpack": "^3.0.0"
+  }
+}

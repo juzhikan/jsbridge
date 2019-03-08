@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>漫画jsbridge测试</title>
+    <style>
+    button {
+        display: block;
+        margin: 20px 0;
+    }
+    </style>
+</head>
+<body>
+    <script>document.write(navigator.userAgent);</script>
+    <div>如果有NEJSBridge的字样，就表示当前页会用NEJSBridge和app交互</div>
+    <h2>登陆</h2>
+    <button id="getLoginUserToken1">getLoginUserToken 获取token，强制登录</button>
+    <button id="getLoginUserToken2">getLoginUserToken 获取token，未登录不强制登录</button>
+    <button id="getUserInfo">getUserInfo</button>
+    <h2>跳转</h2>
+    <button id="topLevelPage0">推荐漫画 iOS不支持bridge方式</button>
+    <button id="topLevelPage1">找漫画 iOS不支持bridge方式</button>
+    <button id="topLevelPage2">我的漫画 iOS不支持bridge方式</button>
+    <button id="topLevelPage4">账号页 iOS不支持bridge方式</button>
+    <button id="topLevelPage5">话题列表 iOS不支持bridge方式</button>
+    <button id="bookListSubject">漫画列表专题页面(暂无)</button>
+    <button id="reader">漫画阅读器</button>
+    <button id="reader2">线上 漫画阅读器</button>
+    <button id="detail">漫画详情</button>
+    <button id="detail2">线上 漫画详情</button>
+    <button id="topic">话题</button>
+    <button id="topic2">线上 话题</button>
+    <button id="exchangeVmIntoCoin">钻石兑换金币，iOS独有</button>
+    
+    <h2>分享</h2>
+    <button id="setShareConfig">setShareConfig 设置webview当前页面的分享参数</button>
+    <button id="share">share 分享</button>
+    <div>share 结果: <span id="shareResult">not ok</span></div>
+    <h2>媒体</h2>
+    <button id="mediaPlay">mediaPlay 播放媒体</button>
+    <button id="mediaClose">mediaClose 媒体关闭</button>
+    <h2>交易</h2>
+    <h3>iOS</h3>
+    <button id="openVip">openVip 开通vip</button>
+    <h3>Android</h3>
+    <button id="purchase">rechargeContent 充值</button>
+    <button id="purchaseSuccess">购买成功vip</button>
+    <button id="purchaseSuccess2">购买成功金币</button>
+    <button id="refreshVipInfo">refreshVipInfo 刷新vip信息，安卓独有</button>
+    <h2>工具</h2>
+    <button id="hardRedirect">强制跳转</button>
+    <button id="webview">内嵌webview打开</button>
+    <button id="closeCurrentWebview">关闭当前客户端打开的webview</button>
+    <button id="appInstallCheck">通知客户端检测是否安装了应用，安卓独有</button>
+    <button id="openLoginView">打开登陆框(v2, since app 3.2.0)</button>
+    <button id="openThirdPartyApp">打开第三方应用，点击后将打开蜗牛应用(v5, since app 3.3.0)</button>
+    <button id="changeDocumentTitle">更改页面标题，点击后更改成“hello 李梅”(v5, since app 3.3.0)</button>
+    <button id="savePictureAndShare">保存图片到本地并分享(大图，v3, since app 3.2.1)</button>
+    <button id="savePictureAndShare2">保存图片到本地并分享(小图，v3, since app 3.2.1)</button>
+    <button id="getGender">获取男女频(小图，v6, since app 4.2.0)</button>
+    <h3>iOS</h3>
+    <button id="hideHeader">隐藏客户端头部(v5, since app 3.3.0)</button>
+    <button id="updateClient">更新客户端</button>
+    <h2>其他</h2>
+    <div>
+        <a href="necomics://manhua.163.com/v1?action=30">ios 打开找漫画页面</a>
+    </div>
+    <div>
+        <a href="necomics://manhua.163.com/v1?action=11">ios 打开我的钻石页面</a>
+    </div>
+    <div>
+        <a href="necomics://manhua.163.com/v1?action=32">ios 打开钻石充值页面</a>
+    </div>
+    <div>
+        <a href="necomics://manhua.163.com/v1?action=31">ios 打开vip开通页面</a>
+    </div>
+    <div>
+        <a href="http://nos.netease.com/ct-public/9a2e170642c2edc79b00176936cbe282.apk?download=internal_test_4.2.0.apk">apk下载页面</a>
+    </div>
+    
+    <script>
+        window.onerror = function(e, s, l, v) {
+            alert(e.toString() + ' ' + s + ' ' + l + ' ' + v);
+        };
+    </script>
+    <script src="https://du.163.com/static/js/zepto.min.js"></script>
+    <script src="https://easyread.nosdn.127.net/web/trunk/1511750707379/bridge.comic.iife.js"></script>
+    
+    <script>
+    $(function() {
+        var ua = window.navigator.userAgent,
+            isIphone = /iphone/i.test(ua);
+        var callHandler = Bridge.comic.callHandler;
+        var registerHandler = Bridge.comic.registerHandler;
+        $('#signSuccess').on('click', function() {
+            callHandler('signSuccess');
+        })
+        $('#getLoginUserToken1').on('click', function() {
+            callHandler('getLoginUserToken', {
+                needClientLogin: true
+            }, function(resp) {
+                if (!resp) {
+                    alert('未登录状态');
+                } else {
+                    if (resp.code == -2) {
+                        alert('用户取消登录');
+                        return;
+                    }
+                    // callHandler('receiveLoginUserTokenSuccess');
+                    alert('获取token成功,token:' + resp.token);
+                    alert('设备信息:' + resp.clientInfo);
+                }
+            });
+        })
+        $('#getLoginUserToken2').on('click', function() {
+            callHandler('getLoginUserToken', {
+                needClientLogin: false
+            }, function(resp) {
+                if (!resp) {
+                    alert('未登录状态');
+                } else {
+                    // callHandler('receiveLoginUserTokenSuccess');
+                    alert('获取token成功,token:' + resp.token);
+                }
+            });
+        })
+        $('#getUserInfo').on('click', function() {
+            callHandler('getUserInfo', {}, function(userInfo) {
+                if (userInfo) {
+                    alert('获取userInfo成功,nickName:' + JSON.stringify(userInfo));
+                } else {
+                    alert('未登录状态');
+                }
+            });
+        })
+        $('#detail').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'detail',
+                query: {
+                    id: '4506311003630014005'
+                }
+            });
+        })
+        $('#detail2').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'detail',
+                query: {
+                    id: '5029535389450157748'
+                }
+            });
+        })
+        $('#topLevelPage0').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topLevelPage',
+                query: {
+                    index: 0
+                }
+            });
+        })
+        $('#topLevelPage1').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topLevelPage',
+                query: {
+                    index: 1
+                }
+            });
+        })
+        $('#topLevelPage2').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topLevelPage',
+                query: {
+                    index: 2
+                }
+            });
+        })
+        $('#topLevelPage3').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topLevelPage',
+                query: {
+                    index: 3
+                }
+            });
+        })
+        $('#topLevelPage4').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topLevelPage',
+                query: {
+                    index: 4
+                }
+            });
+        })
+        $('#topLevelPage5').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topLevelPage',
+                query: {
+                    index: 5
+                }
+            });
+        })
+        $('#bookListSubject').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'bookListSubject',
+                query: {
+                    id: '8182'
+                }
+            });
+        })
+        $('#reader').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'reader',
+                query: {
+                    id: '4217361093950004431',
+                    sectionId: '4284005437290006718'
+                }
+            });
+        })
+        $('#reader2').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'reader',
+                query: {
+                    id: '5015165829890111936'
+                }
+            });
+        })
+        $('#topic').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topic',
+                query: {
+                    id: '11719'
+                }
+            });
+        })
+        $('#topic2').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'topic',
+                query: {
+                    id: '3006915'
+                }
+            });
+        })
+        
+        $('#user').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'userinfo',
+                query: {
+                    uuid: '761f555e427942979116be36e8c66d0c'
+                }
+            });
+        })
+        $('#bookreview').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'bookreview',
+                query: {
+                    bookReviewId: '1086'
+                }
+            });
+        })
+        function connectToNative(url) {
+            var WVJBIframe = document.createElement('iframe');
+            WVJBIframe.style.display = 'none';
+            WVJBIframe.src = url;
+            document.documentElement.appendChild(WVJBIframe);
+            setTimeout(function() { document.documentElement.removeChild(WVJBIframe) }, 0)
+        }
+        connectToNative('neteasecomic://share/support');
+        window.sendShareResult = function() {
+var reset = Array.prototype.slice.call(arguments)
+            document.getElementById('shareResult').innerHTML = JSON.stringify(rest);
+        };
+        window.getShareContent = function() {
+        };
+        $('#share').on('click', function() {
+            callHandler('share', {
+                title: '分享测试',
+                description: '分享描述',
+                picurl: 'https://easyread.nosdn.127.net/web/trunk/1502854027060/xxxxx2017-02-04xxx9.34.51.png?imageView&thumbnail=200y200',
+                link: 'http://du.163.com',
+                text: '分享描述',
+                panel_title: '分享给是对方',
+                activity: '1212'
+            }, function() {
+                document.getElementById('shareResult').innerHTML = 'ok';
+            });
+        })
+        $('#setShareConfig').on('click', function() {
+            callHandler('setShareConfig', {
+                title: '分享测试',
+                description: '分享描述',
+                picurl: 'https://easyread.nosdn.127.net/web/trunk/1502854027060/xxxxx2017-02-04xxx9.34.51.png?imageView&thumbnail=200y200',
+                link: 'http://du.163.com',
+                channel: 'wechatFriend,wechatTimeline,weibo',
+                activity: '1212'
+            });
+        })
+    
+        $('#purchase').on('click', function() {
+            callHandler('rechargeContent', {
+                recharge_param: 'TODO',
+                pay_type: '50',
+                callback_param: 'TODO'
+            }, function(result) {
+                if (result) {
+                    alert(result.success)
+                } else {
+                    alert('用户取消')
+                }
+            });
+        })
+        $('#refreshVipInfo').on('click', function() {
+            callHandler('refreshVipInfo');
+        })
+        $('#purchaseSuccess').on('click', function() {
+            callHandler('purchaseSuccess', {
+                type: 'vip'
+            });
+        })
+        $('#purchaseSuccess2').on('click', function() {
+            callHandler('purchaseSuccess', {
+                type: 'coin'
+            });
+        })
+        $('#openVip').on('click', function() {
+            callHandler('openVip');
+        })
+        $('#hardRedirect').on('click', function() {
+            callHandler('hardRedirect', {
+                url: 'https://baidu.com'
+            });
+        })
+        
+        $('#updateClient').on('click', function() {
+            callHandler('updateClient');
+        })
+        $('#webview').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'webview',
+                query: {
+                    url: 'http://du.163.com',
+                    inside: true
+                }
+            });
+        })
+        $('#closeCurrentWebview').on('click', function() {
+            callHandler('closeCurrentWebview');
+        })
+        $('#noticeSetting').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'noticeSetting'
+            });
+        })
+        $('#getNoticeStatus').on('click', function() {
+            callHandler('getNoticeStatus', {
+                
+            }, function(resp) {
+                alert('获取客户端通知权限开启状态' + resp.status);
+            });
+        })
+        
+        $('#mediaPlay').on('click', function() {
+            callHandler('mediaPlay', {
+                url: 'http://vjs.zencdn.net/v/oceans.mp4',
+                type: 'video'
+            });
+        })
+        $('#mediaClose').on('click', function() {
+            callHandler('mediaClose');
+        });
+        $('#exchangeVmIntoCoin').on('click', function() {
+            callHandler('exchangeVmIntoCoin', {
+                required_count: 50
+            });
+        });
+        
+        $('#appInstallCheck').on('click', function() {
+            callHandler('appInstallCheck', {
+                app_type: '55'
+            }, function(resp) {
+                alert('QQ装了没 ' + resp.installed)
+            });
+        });
+        $('#openLoginView').on('click', function() {
+            callHandler('openLoginView');
+        });
+        $('#openThirdPartyApp').on('click', function() {
+            callHandler('openThirdPartyApp', {
+                schemaUrl: 'nesnailreader://messagelist'
+            }, function(resp) {
+               if (resp.code === 0) {
+                   alert('打开成功');
+               } else {
+                   alert(resp.message || '打开失败');
+               }
+            });
+        });
+        $('#changeDocumentTitle').on('click', function() {
+            callHandler('changeDocumentTitle', {
+                title: 'hello 李梅'
+            });
+        });
+        
+        registerHandler('sharePanelOpen', function() {
+            alert('用户点击右上角成功触发显示分享框(v5, since app 3.3.0)');
+        });
+        registerHandler('shareSuccess', function(resp) {
+            if (resp.code === 0) {
+                alert('分享成功');
+            } else {
+                alert('分享失败');
+            }
+        });
+        $('#savePictureAndShare').on('click', function() {
+            callHandler('savePictureAndShare', {
+                text: 'hello 李梅',
+                picurl: 'https://easyread.nosdn.127.net/web/trunk/1511851706984/xiazai_03.png',
+                link: 'https://yuedu.163.com'
+            }, function(resp) {
+               if (resp.code === 0) {
+                   alert('保存成功');
+               } else {
+                   alert(resp.message || '保存失败');
+               }
+            });
+        });
+        $('#savePictureAndShare2').on('click', function() {
+            callHandler('savePictureAndShare', {
+                text: 'hello 李梅',
+                picurl: 'https://easyread.nosdn.127.net/pic/2016/05/09/41955a58387d41de926dd98f20ba5dca.png?imageView'
+            }, function(resp) {
+               if (resp.code === 0) {
+                   alert('保存成功');
+               } else {
+                   alert(JSON.stringify(resp));
+                   //alert(resp.message || '保存失败');
+               }
+            });
+        });
+        $('#hideHeader').on('click', function() {
+            callHandler('hideHeader', {}, function(resp) {
+               if (resp.code === 0) {
+                   alert('隐藏成功');
+               } else {
+                //    alert(JSON.stringify(resp));
+                   alert(resp.message || '隐藏失败');
+               }
+            });
+        });
+
+        $('#getGender').on('click', function() {
+            callHandler('getGender', {}, function(resp) {
+               if (resp.code === 0) {
+                   alert('返回值是 ' + resp.gender);
+               } else {
+                   alert(resp.message || '调用失败');
+               }
+            });
+        });
+    })
+    </script>
+</body>
+</html>

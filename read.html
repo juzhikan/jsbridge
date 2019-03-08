@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>阅读jsbridge测试</title>
+    <style>
+        button {
+            display: block;
+            margin: 20px 0;
+        }
+        .m-toast{position:absolute;padding:10px 40px; max-width: 66%;text-align:center; word-break: break-all;border-radius:5px;color:#fff;background-color:rgba(0,0,0,.8);-webkit-transition:opacity 0.5s;transition:opacity 0.5s;}
+    </style>
+</head>
+<body>
+    <script>document.write(navigator.userAgent);</script>
+    <div>如果有NEJSBridge的字样，就表示当前页会用NEJSBridge和app交互</div>
+    <h2>登录</h2>
+    <button id="force">getLoginUserToken 获取token，强制登录</button>
+    <button id="unForce">getLoginUserToken 获取token，未登录不强制登录</button>
+    <h2>pageRedirect跳转</h2>
+    <button id="getbookdetail">getbookdetail跳转书籍详情页</button>
+    <button id="viewProfile">viewProfile打开客户端个人主页(木百子)</button>
+    <button id="getchat">getchat登录状态下发私信</button>
+    <button id="gotofeedback">gotofeedback未登录状态下调起反馈意见面板</button>
+    <button id="getbookcomment">getbookcomment跳转到书籍评论页</button>
+    <button id="getbookreward">getbookreward跳转到书籍打赏页</button>
+    <button id="getdaysign">getdaysign跳转到签到页面</button>
+    <button id="gethtmlclick_download">升级客户端(gethtmlclick跳转)</button>
+    <button id="gethtmlclick_detail">书籍详情页(gethtmlclick跳转)</button>
+    <button id="webview">跳转到首页</button>
+    <button id="news">跳转到资讯文章页</button>
+    <h2>pageRedirect-nereader跳转</h2>
+    <button id="recharge">充值</button>
+    <button id="trade0">按章购买书籍</button>
+    <button id="trade1">全本购买书籍</button>
+    <button id="packageBuy">打包购</button>
+    <button id="audio">听书</button>
+    <h2>pageRedirect-neteasereaderuri浏览器打开客户端</h2>
+    <button id="openActivity">打开活动页</button>
+
+    <h2>分享</h2>
+    <button id="share">share 分享</button>
+    <button id="setShareConfig">setShareConfig设置分享参数</button>
+    <h2>签到</h2>
+    <button id="getQuickSignStatus">getQuickSignStatus获取快速签到入口状态: <span id="quickSignStatus"></span></button>
+    <button id="setQuickSignStatus">setQuickSignStatus快速签到入口开关</button>
+
+    <button id="requestRegControl">requestRegControl获取签到提醒开关状态：<span id="regControlStatus"></span></button>
+    <button id="setRegControl">setRegControl签到提醒开关</button>
+
+    <button id="setRegResult">setRegResult签到成功通知客户端</button>
+    <button id="setRegResult1">setRegResult签到成功通知客户端(570版本后)</button>
+    <h2>媒体</h2>
+    <h2>交易</h2>
+    <h3>iOS</h3>
+    <button id="getRecharge">getRecharge调起苹果支付</button>
+    <button id="updateClientUI">updateClientUI更新页面UI</button>
+
+    <h3>Android</h3>
+    <button id="reload">reload当前页面</button>
+
+    <h2>工具</h2>
+    <button id="getClientInfo">getClientInfo获取客户端信息</button>
+    <button id="changeDocumentTitle">changeDocumentTitle修改页面标题</button>
+    <button id="saveImage">saveImage保存图片</button>
+    <button id="closeCurrentWebview">closeCurrentWebview关闭当前客户端打开的webview</button>
+    <button id="wapChannel">wapChannel向客户端调用请求通道接口(签到请求)</button>
+    <button id="noticeStats">noticeStats(签到统计entranceSwitch关)</button>
+    <button id="testCallNative">testCallNative</button>
+    <div>testCallNative 结果: <span id="testCallNativeResult"></span></div>
+
+    <h2>通知</h2>
+    <button id="doTradeSuccess">doTradeSuccess书籍购买成功</button>
+    <button id="doTradeBaoYueSuccess">doTradeBaoYueSuccess包月支付成功</button>
+
+
+    <h2>其他</h2>
+    <button id="commentClient">commentClient评价云阅读</button>
+    <button id="setAutoBuy">setAutoBuy设置自动购买</button>
+
+    <script src="https://yuedust.yuedu.126.net/assets/mobile/js/zepto.js"></script>
+    <script src="https://yuedust.yuedu.126.net/assets/mobile/activity/common/js/base.js"></script>
+    <script src="./dist/bridge.read.iife.js?7686"></script>
+    <script src="https://easyread.nosdn.127.net/web/trunk/1517818897302/vconsole.js"></script>
+<!--     <script src="https://easyread.nosdn.127.net/web/trunk/1519368125130/bridge.read.iife.js"></script>
+ -->
+    <script>
+    $(function() {
+        window.pris = window.pris || {};
+        window.active = window.active || {};
+
+        window.onerror = function(e) {
+            alert(e.toString());
+        };
+
+        var ua = window.navigator.userAgent,
+            isIphone = /iphone/i.test(ua);
+
+        var callHandler = Bridge.read.callHandler;
+        var registerHandler = Bridge.read.registerHandler;
+        var schemaGetter = Bridge.read.schemaGetter;
+        alert(callHandler.toString())
+        $('#force').on('click', function() {
+            // console.log(schemaGetter('getLoginUserToken', {needClientLogin: true}));
+            callHandler('getLoginUserToken', {
+                needClientLogin: true
+            }, function(json) {
+                if (!json.keys) {
+                    toast('未登录状态');
+                } else {
+                    callHandler('receiveLoginUserTokenSuccess');
+                    toast('force 获取token成功,token:' + JSON.stringify(json));
+                }
+            });
+        })
+
+        $('#unForce').on('click', function() {
+            callHandler('getLoginUserToken', {
+                needClientLogin: false
+            }, function(json) {
+                if (!json.keys) {
+                    toast('未登录状态');
+                } else {
+                    callHandler('receiveLoginUserTokenSuccess');
+                    toast('unForce 获取token成功,token:' + JSON.stringify(json));
+                }
+            });
+        })
+
+        $('#getbookdetail').on('click', function() {
+            console.log(schemaGetter('pageRedirect', {
+                path: 'getbookdetail',
+                query: {entryid: 'cf3587af574a4056a798878f59fa1b60_4'}
+            }));
+            callHandler('pageRedirect', {
+                path: 'getbookdetail',
+                query: {entryid: 'cf3587af574a4056a798878f59fa1b60_4'}
+            });
+        })
+
+        $('#viewProfile').on('click', function() {
+            console.log(schemaGetter('pageRedirect', {path: 'viewProfile',query: {uid: '1347658229197', nickname: '木百子'}}));
+            callHandler('pageRedirect', {
+                path: 'viewProfile',
+                query: {uid: '1347658229197', nickname: '木百子'}
+            });
+        })
+
+        $('#getchat').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'getchat',
+                query: {userId: '67329447', nickname: '阅读小知', tag: 3}
+            });
+        })
+
+        $('#gotofeedback').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'gotofeedback',
+                query: {userId: '67326923', nickname: '阅读小知', tag: 2}
+            });
+        })
+
+        $('#getbookcomment').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'getbookcomment',
+                query: {entryid: 'cf3587af574a4056a798878f59fa1b60_4'}
+            });
+        })
+
+        $('#getbookreward').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'getbookreward',
+                query: {entryid: 'cf3587af574a4056a798878f59fa1b60_4'}
+            });
+        })
+
+        $('#getdaysign').on('click', function() {
+            console.log(schemaGetter('pageRedirect', {
+                path: 'getdaysign'
+            }));
+
+            callHandler('pageRedirect', {
+                path: 'getdaysign'
+            });
+        })
+
+        $('#gethtmlclick_download').on('click', function() {
+            console.log(schemaGetter('pageRedirect', {
+                path: 'gethtmlclick',
+                query: {
+                    url: encodeURIComponent('http://yuedu.163.com/download')
+                }
+            }));
+
+            callHandler('pageRedirect', {
+                path: 'gethtmlclick',
+                query: {
+                    url: encodeURIComponent('http://yuedu.163.com/download')
+                }
+            });
+        })
+
+        $('#gethtmlclick_detail').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'gethtmlclick',
+                query: {
+                    url: 'neteasereaderuri://type=2&entryid=a2a4841d50e04a31a6185becd23ff999_4'
+                }
+            });
+        })
+
+        $('#webview').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'webview'
+            });
+        })
+
+        $('#news').on('click', function() {
+            console.log(schemaGetter('pageRedirect', {
+                path: 'news',
+                query: {
+                    entryid: '0ffc16faba8346159b65915df20082f5_1'
+                }
+            }));
+            callHandler('pageRedirect', {
+                path: 'news',
+                query: {
+                    entryid: '0ffc16faba8346159b65915df20082f5_1'
+                }
+            });
+        })
+
+        $('#recharge').on('click', function() {
+            console.log(schemaGetter('pageRedirect', {
+                path: 'recharge',
+                query: {
+                    out: 0
+                }
+            }));
+
+            callHandler('pageRedirect', {
+                path: 'recharge',
+                query: {
+                    out: 0
+                }
+            })
+        })
+
+        $('#trade0').on('click', function() {
+            callHandler('pageRedirect', {
+                path: 'trade',
+                query: {
+                    id: '5ff9990cb61e418c82ea3d74f83137a8_4', //阅读bookId
+                    title: '碧台空歌', //书籍title
+                    full: 0 //0 按章购买 1 全本购买
+                }
+            })
+        })
+
+        $('#trade1').on('click', function() {
+            callHandler('pageRedirect', {
+              path: 'trade',
+              query: {
+                  id: '5656938f94484071aa0cb97271abd43f_4', //阅读bookId
+                  title: '扯经', //书籍title
+                  full: 1, //0 按章购买 1 全本购买
+                  price: 200
+              }
+            })
+        })
+
+        $('#packagebuy').on('click', function(){
+            callHandler('pageRedirect', {
+                  path: 'packagebuy',
+                  query: {
+                      pid: '5200233003', //打包购地址
+                      url: location.href //要打开的h5页面url
+                  }
+              })
+        })
+
+        $('#audio').on('click', function(){
+            callHandler('pageRedirect', {
+                path: 'audio',
+                query: {
+                    id: 'audio_05f871a2e4f04293b9ac1abf95edb912_4' //阅读bookId
+                }
+            })
+        })
+
+        $('#openActivity').on('click', function(){
+            callHandler('pageRedirect', {
+                path: 'neteasereaderuri://',
+                query: {
+                    type: 3,
+                    url: location.href
+                }
+            })
+        })
+
+        registerHandler('shareComplete', function(resp) {
+            if (resp.code === 0) {
+                alert('分享成功');
+            } else {
+                alert('分享失败');
+            }
+        });
+
+        $('#share').on('click', function() {
+            callHandler('share', {
+                title: '分享测试',
+                description: '分享描述',
+                picurl: 'https://easyread.nosdn.127.net/web/trunk/1502854027060/xxxxx2017-02-04xxx9.34.51.png?imageView&thumbnail=200y200',
+                link: 'http://m.yuedu.163.com',
+                activity: '1212',
+                channel: "['_share_weixin','_share_weixinquan','_share_yixin','_share_yixinquan','_share_tsina','_share_qqfriend','_share_qzone','_share_ttengxun','_share_alipay']"
+            });
+        })
+
+        $('#setShareConfig').on('click', function() {
+            callHandler('setShareConfig', {
+                title: '分享测试',
+                description: '分享描述',
+                picurl: 'https://easyread.nosdn.127.net/web/trunk/1502854027060/xxxxx2017-02-04xxx9.34.51.png?imageView&thumbnail=200y200',
+                link: 'http://m.yuedu.163.com',
+                activity: '1212',
+                channel: "['_share_weixin','_share_weixinquan','_share_yixin','_share_yixinquan','_share_tsina','_share_qqfriend','_share_qzone','_share_ttengxun','_share_alipay']"
+            });
+        })
+
+        registerHandler('shareComplete', function(resp) {
+            toast('分享结果:' + resp.result)
+        });
+
+        var quickSignStatus = 0;
+        $('#getQuickSignStatus').on('click', function() {
+            callHandler('getQuickSignStatus', {}, function(resp) {
+                quickSignStatus = resp.status
+                $('#quickSignStatus').text(quickSignStatus)
+                toast('快速签到开关状态：' + quickSignStatus)
+            });
+        })
+
+        $('#setQuickSignStatus').on('click', function() {
+            callHandler('setQuickSignStatus', {data: !quickSignStatus});
+            $('#getQuickSignStatus').trigger('click');
+        })
+
+        var regControlStatus = 0;
+        $('#requestRegControl').on('click', function() {
+            callHandler('requestRegControl', {}, function(resp) {
+                regControlStatus = resp.status
+                $('#regControlStatus').text(regControlStatus)
+                toast('签到提醒开关状态：' + regControlStatus)
+            });
+        })
+
+        $('#setRegControl').on('click', function() {
+            callHandler('setRegControl', {reg: ~~!regControlStatus, time: 72000});
+            $('#requestRegControl').trigger('click');
+        })
+
+        $('#setRegResult').on('click', function() {
+            callHandler('setRegResult', {res: 1, propmt: '测试签到成功', advertUrl: 'https://easyreadfs.nosdn.127.net/FL9jSjUy2w9Mu8IDZW3xFA==/8796093022867920254'});
+        })
+
+        $('#setRegResult1').on('click', function() {
+            callHandler('setRegResult', {"count":8,"propmt":"恭喜你获得8点红包","advertUrl":"https://easyreadfs.nosdn.127.net/PHFFt4SFScxbokB0WsQTdg==/8796093023772334262","module":{"list":[{"author":"高风利（ 编著）","bookType":0,"cartFlag":0,"category":"成功励志","clickCount":90226,"content":"作为一个卓越的领导人，不仅仅要巩固其领导的主导地位，还必须具备8大心里素质，这8大心里素质不仅可以使你一位领导人，并且可以让你成为一位真正卓越的领导者和统治者！","cover":"https://easyreadfs.nosdn.127.net/-znG5llRqDr0HKr3owVPQQ==/6597137936378305929","d_begin":0,"d_end":0,"discountDesc":"","iap_id":"","iap_price":0,"id":"8c400fe68a514914a186e766bd9e5a2b_4","integrity":1,"nprice":200,"nwprice":0,"p_action":500,"payment":0,"price":200,"recomContent":"","reduce_begin":0,"reduce_end":0,"share_begin":0,"share_end":0,"style":1,"title":"卓越领导人的8大素质","vip":2,"wprice":0},{"author":"李昱峤","bookType":0,"cartFlag":0,"category":"灵异恐怖","clickCount":1000,"content":"他是风水界的另类，住在一栋时隐时现的老宅里，无论什么案件，他若收下酬金，必会一追到底，没人能讲出他的身份来历，甚至没人知道他确切的年纪，坊间口口相传他嫉恶如仇的品性，奇妙的异术，与种种意想不到的经历。。。。。。","cover":"https://easyreadfs.nosdn.127.net/wR6QkIo_5wQfqVvO9y9iHA==/3956412272645239477","d_begin":0,"d_end":0,"discountDesc":"","iap_id":"","iap_price":0,"id":"nb_000BNaYI_4","integrity":3,"nprice":0,"nwprice":0,"p_action":500,"payment":0,"price":0,"recomContent":"","reduce_begin":0,"reduce_end":0,"share_begin":0,"share_end":0,"style":1,"title":"少年风水师","vip":0,"wprice":0},{"author":"海洁作者测试账号","bookType":0,"cartFlag":0,"category":"都市言情","clickCount":12019,"content":"我保证我是此作品的著作权人，并将此作品非独家发表于网易云阅读，并保证不会在作品内任何位置宣传或提及其它网站网址。任何组织与个人如欲转载，须征得我同意。我保证我是此作品的著作权人，并将此作品非独家发表于网易云阅读，并保证不会在作品内任何位置宣传或提及其它网站网址。任何组织与个人如欲转载，须征得我同意。","cover":"https://easyreadfs.nosdn.127.net/S9lssXaO5nENsheTUszuvQ==/8796093024055542219","d_begin":0,"d_end":0,"discountDesc":"","iap_id":"","iap_price":0,"id":"ef9e5fddaf764b3389a571b685168fea_4","integrity":3,"nprice":0,"nwprice":7,"p_action":500,"payment":0,"price":0,"recomContent":"","reduce_begin":0,"reduce_end":0,"share_begin":0,"share_end":0,"style":0,"title":"充值测试专用-聪哥-修改一下","vip":1,"wprice":7}],"hint":"哈嘎嘎","module":59}});
+        })
+
+
+        $('#getClientInfo').on('click', function() {
+            callHandler('getclientinfo', {}, function(resp) {
+                alert(JSON.stringify(resp))
+            });
+        })
+
+        $('#getRecharge').on('click', function() {
+            callHandler('getRecharge', {}, function(resp){
+                var rechargeResult = parseInt(resp.rechargeResult);
+                if(rechargeResult > 0){
+                    toast('充值成功：rechargeResult:'+rechargeResult + 'rechargeId:'+ resp.rechargeId);
+                }else{
+                    toast('充值失败,请重试');
+                }
+            });
+        })
+
+        $('#updateClientUI').on('click', function() {
+            callHandler('updateClientUI', {
+                type: 'title',
+                data: 'update页面title'
+            });
+        })
+
+        $('#reload').on('click', function() {
+            callHandler('reload');
+        })
+
+        $('#changeDocumentTitle').on('click', function() {
+            callHandler('changeDocumentTitle', {title: '修改页面标题后'});
+        })
+
+        $('#closeCurrentWebview').on('click', function() {
+            callHandler('closeCurrentWebview');
+        })
+
+        $('#saveImage').on('click', function() {
+            callHandler('saveImage', {url: 'https://easyreadfs.nosdn.127.net/ZsKaXvRfA676BwqmLTCeQA==/8796093023971647976?imageView&thumbnail=240y336'});
+        })
+
+        // 待验证
+        $('#wapChannel').on('click', function() {
+            callHandler('wapChannel', {action: 'dailySign', data: 'dailySign'}, function(resp) {
+                var action = resp.action, response = resp.response;
+                alert(JSON.stringify(response));
+                if(action === 'dailySign' && response) {
+                    if(response.resCode === 0){
+                        toast('token获取成功: ' + JSON.stringify(response))
+                    }else{
+                        toast('token获取失败')
+                    }
+                }
+            });
+        })
+
+        $('#noticeStats').on('click', function() {
+            callHandler('noticeStats', {activity: 'dailySign', position: 'entranceSwitch', data: 'off'});
+        })
+
+        $('#testCallNative').on('click', function() {
+            callHandler('testCallNative', {'param': '中文测试'}, function(resp){
+                $('#testCallNativeResult').text(JSON.stringify(resp))
+            });
+        })
+
+        $('#doTradeSuccess').on('click', function() {
+            console.log(schemaGetter('doTradeSuccess', {bookId: 'cf3587af574a4056a798878f59fa1b60_4', chapterIds: '4acd95d7b3c34b9dabe33062ba30721d_4,5529eab97e5d4a60b0081b8140a1c03b_4'}));
+            callHandler('doTradeSuccess', {bookId: 'cf3587af574a4056a798878f59fa1b60_4', chapterIds: '4acd95d7b3c34b9dabe33062ba30721d_4,5529eab97e5d4a60b0081b8140a1c03b_4'});
+        })
+
+        $('#doTradeBaoYueSuccess').on('click', function() {
+            callHandler('doTradeBaoYueSuccess', {id: '60071003'});
+        })
+
+        $('#commentClient').on('click', function() {
+            callHandler('commentClient');
+        })
+
+        $('#setAutoBuy').on('click', function() {
+            callHandler('setAutoBuy', {isAutoBuy: true});
+        })
+
+        registerHandler('bindMobileComplete', function(resp) {
+            if (resp.code === 0) {
+                alert('绑定成功');
+            } else {
+                alert('绑定失败');
+            }
+        });
+
+        registerHandler('commentClientComplete', function(resp) {
+            alert('完成客户端评价');
+        });
+    })
+    </script>
+</body>
+</html>
+
